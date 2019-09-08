@@ -8,50 +8,79 @@
 
 import UIKit
 import ContactsUI
+
 class ViewController: UIViewController,CNContactPickerDelegate{
-
     
-
-//add function below to existing code in main PASSWORD project (import from other project)
+    private let contactPicker = CNContactPickerViewController()
     
-        //MARK:- contact picker
-        func onClickPickContact(){
-            
-            
-            let contactPicker = CNContactPickerViewController()
-            contactPicker.delegate = self
-            contactPicker.displayedPropertyKeys =
-                [CNContactGivenNameKey
-                    , CNContactPhoneNumbersKey]
-            self.present(contactPicker, animated: true, completion: nil)
-            
-        }
+    var contactArray: [String] = []
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
         
-        func contactPicker(_ picker: CNContactPickerViewController,
-                           didSelect contactProperty: CNContactProperty) {
-            
-        }
-        
+        // Do any additional setup after loading the view.
+    }
+    
+    
+    @IBAction func buttonClicked(_ sender: Any) {
+        contactPicker.delegate = self
+        self.present(contactPicker, animated: true, completion: nil)
+    }
+    
         func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
-            // You can fetch selected name and number in the following way
+            let phoneNumberCount = contact.phoneNumbers.count
             
-            // user name
-            let userName:String = contact.givenName
+            guard phoneNumberCount > 0 else {
+                dismiss(animated: true)
+                //show pop up: "Selected contact does not have a number"
+                return
+            }
             
-            // user phone number
-            let userPhoneNumbers:[CNLabeledValue<CNPhoneNumber>] = contact.phoneNumbers
-            let firstPhoneNumber:CNPhoneNumber = userPhoneNumbers[0].value
+            if phoneNumberCount == 1 {
+                setNumberFromContact(contactNumber: contact.phoneNumbers[0].value.stringValue)
+                
+            } else {
+                let alertController = UIAlertController(title: "Select one of the numbers", message: nil, preferredStyle: .alert)
+                
+                for i in 0...phoneNumberCount-1 {
+                    let phoneAction = UIAlertAction(title: contact.phoneNumbers[i].value.stringValue, style: .default, handler: {
+                        alert -> Void in
+                        self.setNumberFromContact(contactNumber: contact.phoneNumbers[i].value.stringValue)
+                    })
+                    alertController.addAction(phoneAction)
+                }
+                let cancelAction = UIAlertAction(title: "Cancel", style: .destructive, handler: {
+                    alert -> Void in
+                    
+                })
+                alertController.addAction(cancelAction)
+                
+                dismiss(animated: true)
+                self.present(alertController, animated: true, completion: nil)
+            }
+        }
+        
+        func setNumberFromContact(contactNumber: String) {
             
+            //UPDATE YOUR NUMBER SELECTION LOGIC AND PERFORM ACTION WITH THE SELECTED NUMBER
             
-            // user phone number string
-            let primaryPhoneNumberStr:String = firstPhoneNumber.stringValue
-            
-            print(primaryPhoneNumberStr)
-            
+            var contactNumber = contactNumber.replacingOccurrences(of: "-", with: "")
+            contactNumber = contactNumber.replacingOccurrences(of: "(", with: "")
+            contactNumber = contactNumber.replacingOccurrences(of: ")", with: "")
+            //contactNumber = contactNumber.removeWhitespacesInBetween()
+            guard contactNumber.count >= 10 else {
+                dismiss(animated: true) {
+                    //self.popUpMessageError(value: 10, message: "Selected contact does not have a valid number")
+                }
+                return
+            }
+            //textFieldNumber.text = String(contactNumber.suffix(10))
+           contactArray.append(contactNumber)
+            print(contactArray)
         }
         
         func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
             
         }
-    }
-
+    
+}
